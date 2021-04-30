@@ -19,17 +19,19 @@ import (
 
 // SpecFile command to generate a swagger spec from a go application
 type SpecFile struct {
-	WorkDir     string         `long:"work-dir" short:"w" description:"the base path to use" default:"."`
-	BuildTags   string         `long:"tags" short:"t" description:"build tags" default:""`
-	ScanModels  bool           `long:"scan-models" short:"m" description:"includes models that were annotated with 'swagger:model'"`
-	Compact     bool           `long:"compact" description:"when present, doesn't prettify the json"`
-	Output      flags.Filename `long:"output" short:"o" description:"the file to write to"`
-	Input       flags.Filename `long:"input" short:"i" description:"an input swagger file with which to merge"`
-	Include     []string       `long:"include" short:"c" description:"include packages matching pattern"`
-	Exclude     []string       `long:"exclude" short:"x" description:"exclude packages matching pattern"`
-	IncludeTags []string       `long:"include-tag" short:"" description:"include routes having specified tags (can be specified many times)"`
-	ExcludeTags []string       `long:"exclude-tag" short:"" description:"exclude routes having specified tags (can be specified many times)"`
-	ExcludeDeps bool           `long:"exclude-deps" short:"" description:"exclude all dependencies of project"`
+	WorkDir         string         `long:"work-dir" short:"w" description:"the base path to use" default:"."`
+	BuildTags       string         `long:"tags" short:"t" description:"build tags" default:""`
+	ScanModels      bool           `long:"scan-models" short:"m" description:"includes models that were annotated with 'swagger:model'"`
+	Compact         bool           `long:"compact" description:"when present, doesn't prettify the json"`
+	Output          flags.Filename `long:"output" short:"o" description:"the file to write to"`
+	Input           flags.Filename `long:"input" short:"i" description:"an input swagger file with which to merge"`
+	Include         []string       `long:"include" short:"c" description:"include packages matching pattern"`
+	Exclude         []string       `long:"exclude" short:"x" description:"exclude packages matching pattern"`
+	IncludeTags     []string       `long:"include-tag" short:"" description:"include routes having specified tags (can be specified many times)"`
+	ExcludeTags     []string       `long:"exclude-tag" short:"" description:"exclude routes having specified tags (can be specified many times)"`
+	ExcludeDeps     bool           `long:"exclude-deps" short:"" description:"exclude all dependencies of project"`
+	Host            string         `long:"host" short:"" description:"host and port for swagger host (ip:port)"`
+	DescriptionFile flags.Filename `long:"markdownFile" short:"" description:"Parse markdown file to use as description, disabled by default"`
 }
 
 // Execute runs this command
@@ -58,7 +60,17 @@ func (s *SpecFile) Execute(args []string) error {
 	if err != nil {
 		return err
 	}
-
+	if s.Host != "" {
+		swspec.Host = s.Host
+	}
+	md := string(s.DescriptionFile)
+	if md != "" {
+		b, err := ioutil.ReadFile(md)
+		if err != nil {
+			return fmt.Errorf("read DescriptionFile(markdwon): %w", err)
+		}
+		swspec.Info.Description = string(b)
+	}
 	return writeToFile(swspec, !s.Compact, string(s.Output))
 }
 
